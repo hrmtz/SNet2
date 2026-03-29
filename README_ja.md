@@ -27,57 +27,10 @@
 
 - RAM 12GB以上のPC（VM4台を同時起動）
 - [VirtualBox](https://www.virtualbox.org/) 7.0以上
-- Anthropic APIキー（[console.anthropic.com](https://console.anthropic.com/)）
-
-## ダウンロード
-
-[Releases](https://github.com/hrmtz/SNet2/releases)から全OVAをダウンロード：
-
-| OVA | 役割 | サイズ |
-|-----|------|--------|
-| `SNet-Claude.ova` | AIトレーナー（Claude Code） | ~300 MB |
-| `SNet2-Target.ova` | 監視対象のターゲットサーバー | ~1 GB |
-| `SNet2-Zabbix.ova` | Zabbix監視サーバー | ~1.2 GB |
-
-Kali Linux VMも必要：
-- SNet1クリア済みなら同じKaliを再利用（SNet2はアドオンとしてインストール）
-- なければ[kali.org](https://www.kali.org/get-kali/#kali-virtual-machines)からダウンロード
-
-> SNet1で`SNet-Claude.ova`を持っている？ **そのまま使える。** NICを`SNet2-Net`に切替えるだけ — 起動時にIPが自動設定される。
+- [Vagrant](https://developer.hashicorp.com/vagrant/install)
+- [Anthropic APIキー](https://console.anthropic.com/)
 
 ## セットアップ
-
-### OVAインポート + 手動ネットワーク設定
-
-1. 各`.ova`ファイルをVirtualBoxにインポート（デフォルト設定でOK）
-2. ネットワーク作成（初回のみ）：
-
-```bash
-VBoxManage natnetwork add --netname "SNet2-Net" --network "10.0.2.0/24" --enable --dhcp on
-VBoxManage natnetwork modify --netname "SNet2-Net" --port-forward-4 "claude-ssh:tcp:[]:2222:[10.0.2.5]:22"
-VBoxManage natnetwork modify --netname "SNet2-Net" --port-forward-4 "kali-ssh:tcp:[]:2223:[10.0.2.10]:22"
-```
-
-3. 全VM起動：
-
-```bash
-VBoxManage startvm "SNet-Claude" --type headless
-VBoxManage startvm "SNet-Kali" --type headless
-```
-
-TargetとZabbixは通常起動でもヘッドレスでもOK。
-
-4. トレーナーに接続：
-
-```bash
-ssh -p 2222 snet@localhost
-```
-
-デフォルトパスワード: `snet`。初回ログイン時にAnthropic APIキーを入力。Claude Codeが自動起動する。
-
-5. トレーナーに従え — ClaudeがKaliセットアップ、ネットワーク構成、ゲーム進行を担当する。
-
-### Vagrantで一発
 
 ```bash
 git clone https://github.com/hrmtz/SNet2.git
@@ -85,19 +38,17 @@ cd SNet2
 vagrant up
 ```
 
-全VM、ネットワーク、ポートフォワード — コマンド1つ。`vagrant ssh claude`または`ssh -p 2222 snet@localhost`で接続。
+全VM（AIトレーナー、Kali、ターゲット、Zabbix）、ネットワーク、ポートフォワード — コマンド1つ。
 
-### AIトレーナーなし
+トレーナーに接続：
 
-TargetとZabbixのOVAをインポート。Kaliとネットワークを繋げるだけ。トレーナーなしでも遊べる。
+```bash
+ssh -p 2222 snet@localhost
+```
 
-### セットアップが難しい？
+デフォルトパスワード: `snet`。初回ログイン時にAnthropic APIキーを入力。Claude Codeが自動起動する。
 
-VBoxManageコマンドやNATネットワーク設定が面倒なら、ホストマシンのClaude Codeに任せられる。適当なディレクトリで`claude`を起動して、これを貼り付けるだけ：
-
-> SNet2-Target.ova、SNet2-Zabbix.ova、SNet-Claude.ovaをダウンロードしました。VirtualBoxにインポートして、SNet2-Net（10.0.2.0/24）というNATネットワークを作成し、SSHのポートフォワード（ホスト2222→10.0.2.5:22、ホスト2223→10.0.2.10:22）を設定して、全VMを起動してください。
-
-ホスト上のClaude Codeは通常の権限で動作する — コマンド実行前に毎回確認が入る。
+トレーナーに従え — ClaudeがKaliセットアップ、ネットワーク構成、ゲーム進行を担当する。
 
 ## 学べること
 
@@ -128,8 +79,6 @@ SNet2 = 警備員の目を盗んで居座る  （中級）
 ```
 
 SNet1を先にクリアすることを推奨するが、必須ではない。SNet1経験者には、他の人には見えないものが見えるかもしれない。
-
-SNet2はアドオン — SNet1のKali VMとClaude OVAがあれば、TargetとZabbixのOVAを追加するだけ。
 
 ## クレジット
 
